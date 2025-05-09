@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Отзывы о банках{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-black: #121212;
+            --primary-green: #2ecc71;
+            --dark-green: #27ae60;
+            --light-gray: #f8f9fa;
+            --white: #ffffff;
+            --text-muted: #7f8c8d;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            color: var(--primary-black);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .navbar-custom {
+            background-color: var(--primary-black) !important;
+            border-bottom: 3px solid var(--primary-green);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-green);
+            border-color: var(--primary-green);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--dark-green);
+            border-color: var(--dark-green);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-green);
+            border-color: var(--primary-green);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-green);
+            color: white;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            margin-top: 20px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .badge.bg-primary {
+            background-color: var(--primary-green) !important;
+        }
+
+        footer {
+            background-color: var(--primary-black);
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: auto;
+        }
+
+        .rating {
+            color: #f1c40f;
+            font-size: 1.2em;
+        }
+
+        .navbar-custom {
+            padding-top: 0.5rem; /* Уменьшаем отступы шапки */
+            padding-bottom: 0.5rem;
+        }
+
+        .navbar-brand {
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-right: 0; /* Убираем стандартный отступ справа */
+        }
+
+        .navbar-brand img {
+            height: 50px !important; /* Фиксированная высота */
+            width: auto;
+            margin: 5 px 5 !important; /* "Поджимаем" отступы сверху/снизу */
+            margin-right:  30px
+        }
+
+        .navbar-brand:hover img {
+            transform: scale(1.05);  /* Эффект при наведении */
+        }
+
+        .logo-text {
+            font-size: 1.8rem;  /* Увеличить текстовую версию */
+            color: var(--primary-green);
+            font-weight: 700;
+            margin-left: 10px;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 0.25rem rgba(46, 204, 113, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.svg') }}"
+                     alt="BankReviews">
+                <span class="logo-text" style="font-size: 1.8rem; display: none;">BankReviews</span>
+            </a>
+                <a class="btn btn-outline-primary me-2" href="{{ url_for('analytics') }}">
+                <i class="bi bi-graph-up"></i> Аналитика
+            </a>
+            <nav class="ms-auto">
+                {% if user %}
+                    <span class="text-light me-3">Привет, {{ user }}!</span>
+                    <a href="{{ url_for('profile', username=user) }}" class="btn btn-outline-light me-2">
+                        <i class="bi bi-person-circle"></i> Профиль
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
+                        <i class="bi bi-box-arrow-right"></i> Выйти
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-success me-2">
+                        <i class="bi bi-box-arrow-in-right"></i> Войти
+                    </a>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-light">
+                        <i class="bi bi-person-plus"></i> Регистрация
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="container my-4">
+        <!-- Flash сообщения и контент без изменений -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-center">
+        <div class="container">
+            <p>© 2025 НейроРейтинг. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!-- templates/index.html -->
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Последние отзывы</h2>
+        <a href="{{ url_for('add_review') }}" class="btn btn-primary">Добавить отзыв</a>
+    </div>
+
+    <div class="filter-container">
+        <form method="get" class="row g-3">
+          <div class="col-md-2">
+            <label for="category" class="form-label">Категория</label>
+            <select name="category" id="category" class="form-select">
+              <option value="">Все категории</option>
+              {% for category in categories %}
+                <option value="{{ category }}" {% if request.args.get('category') == category %}selected{% endif %}>{{ category }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-2">
+            <label for="bank" class="form-label">Банк</label>
+            <select name="bank" id="bank" class="form-select">
+              <option value="">Все банки</option>
+              {% for bank in banks %}
+                <option value="{{ bank }}" {% if request.args.get('bank') == bank %}selected{% endif %}>{{ bank }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-2">
+            <label for="sort" class="form-label">Сортировка</label>
+            <select name="sort" id="sort" class="form-select">
+              <option value="newest"  {% if request.args.get('sort') == 'newest'  %}selected{% endif %}>Сначала новые</option>
+              <option value="oldest"  {% if request.args.get('sort') == 'oldest'  %}selected{% endif %}>Сначала старые</option>
+              <option value="highest" {% if request.args.get('sort') == 'highest' %}selected{% endif %}>Высокий рейтинг</option>
+              <option value="lowest"  {% if request.args.get('sort') == 'lowest'  %}selected{% endif %}>Низкий рейтинг</option>
+            </select>
+          </div>
+
+          <div class="col-md-2">
+            <label for="date_from" class="form-label">Дата от</label>
+            <input type="date" id="date_from" name="date_from"
+                   class="form-control"
+                   value="{{ request.args.get('date_from', '') }}">
+          </div>
+
+          <div class="col-md-2">
+            <label for="date_to" class="form-label">до</label>
+            <input type="date" id="date_to" name="date_to"
+                   class="form-control"
+                   value="{{ request.args.get('date_to', '') }}">
+          </div>
+
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-success w-100">Применить</button>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary ms-2">Сбросить</a>
+          </div>
+        </form>
+    </div>
+
+    {% for review in reviews.items %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="card-title">{{ review.username }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                      {{ review.bank }} • {{ review.created_at.strftime('%d.%m.%Y') }}
+                    </h6>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-primary">{{ review.category }}</span>
+                    <div class="rating">
+                        {% for i in range(1, 6) %}
+                            {% if i <= review.rating %}
+                                ★
+                            {% else %}
+                                ☆
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <p class="card-text mt-3">{{ review.content }}</p>
+            <a href="{{ url_for('profile', username=review.author.username) }}"
+                 class="btn btn-sm btn-outline-primary">Отзывы пользователя
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+
+    <nav>
+        <ul class="pagination justify-content-center">
+            {% if reviews.has_prev %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('index', page=reviews.prev_num, category=request.args.get('category')) }}">Предыдущая</a></li>
+            {% endif %}
+            {% for num in reviews.iter_pages() %}
+                {% if num %}
+                    <li class="page-item {% if num == reviews.page %}active{% endif %}">
+                        <a class="page-link" href="{{
+                            url_for('index',
+                            page=num,
+                            category=request.args.get('category'),
+                            bank=request.args.get('bank'),
+                            sort=request.args.get('sort'),
+                            date_from=request.args.get('date_from'),
+                            date_to=request.args.get('date_to')) }}">{{ num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            {% if reviews.has_next %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('index', page=reviews.next_num, category=request.args.get('category')) }}">Следующая</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endblock %}

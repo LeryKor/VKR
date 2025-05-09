@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль {{ username }}{% endblock %}
+
+{% block content %}
+    <div class="mb-4">
+        <h2>Отзывы пользователя {{ username }}</h2>
+    </div>
+
+    {% for review in reviews %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ review.bank }}</h6>
+                    <span class="badge bg-primary">{{ review.category }}</span>
+                </div>
+                <div class="rating">
+                    {% for i in range(1, 6) %}
+                        {% if i <= review.rating %}
+                            ★
+                        {% else %}
+                            ☆
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <p class="card-text mt-3">{{ review.content }}</p>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">Пользователь пока не оставил ни одного отзыва.</div>
+    {% endfor %}
+{% endblock %}

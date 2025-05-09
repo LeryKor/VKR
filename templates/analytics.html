@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Аналитика отзывов{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Аналитика отзывов</h2>
+
+<!-- ---------------- Фильтры ------------------ -->
+<form method="get" class="row g-3 mb-4">
+  <div class="col-md-3">
+    <label for="category" class="form-label">Категория</label>
+    <select name="category" id="category" class="form-select">
+      <option value="">Все категории</option>
+      {% for cat in categories %}
+        <option value="{{ cat }}" {% if request.args.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label for="bank" class="form-label">Банк</label>
+    <select name="bank" id="bank" class="form-select">
+      <option value="">Все банки</option>
+      {% for bank in banks %}
+        <option value="{{ bank }}" {% if request.args.get('bank') == bank %}selected{% endif %}>{{ bank }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label for="rating_min" class="form-label">Рейтинг от</label>
+    <select name="rating_min" id="rating_min" class="form-select">
+      {% for r in range(1,6) %}
+        <option value="{{ r }}" {% if request.args.get('rating_min', '1')|int == r %}selected{% endif %}>{{ r }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label for="rating_max" class="form-label">до</label>
+    <select name="rating_max" id="rating_max" class="form-select">
+      {% for r in range(1,6) %}
+        <option value="{{ r }}" {% if request.args.get('rating_max', '5')|int == r %}selected{% endif %}>{{ r }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2 d-flex align-items-end">
+    <button type="submit" class="btn btn-success w-100">Применить</button>
+  </div>
+  <div class="col-md-3">
+    <label for="date_from" class="form-label">Дата от</label>
+    <input type="date" id="date_from" name="date_from"
+           class="form-control"
+           value="{{ request.args.get('date_from', '') }}">
+  </div>
+
+  <div class="col-md-3">
+    <label for="date_to" class="form-label">до</label>
+    <input type="date" id="date_to" name="date_to"
+           class="form-control"
+           value="{{ request.args.get('date_to', '') }}">
+  </div>
+</form>
+
+<!-- -------------- Chart.js ------------------- -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+<div class="row gy-4">
+   <!-- 1-я строка --------------------------------------------------------- -->
+  <div class="col-md-6"><canvas id="catChart"></canvas></div>
+  <div class="col-md-6"><canvas id="ratingChart"></canvas></div>
+
+  <!-- 2-я строка: слева pie, справа ДВА временных графика --------------- -->
+  <div class="col-md-6"><canvas id="bankChart"></canvas></div>
+
+  <div class="col-md-6 d-flex flex-column">
+    <canvas id="timeChart"></canvas>            <!-- Кол-во отзывов -->
+    <canvas id="avgRatingTimeChart" class="mt-4"></canvas> <!-- Ср. рейтинг -->
+  </div>
+
+  <!-- 3-я строка --------------------------------------------------------- -->
+  <div class="col-md-6"><canvas id="bankAvgChart"></canvas></div>
+  <div class="col-md-6"><canvas id="ratingDistChart"></canvas></div>
+
+</div>
+</div>
+
+<script>
+const data = {{ chart_data|safe }};
+
+/* ------------ цвета ------------ */
+const green = getComputedStyle(document.documentElement)
+                .getPropertyValue('--primary-green').trim() || '#2ecc71';
+const greenPalette = len => Array.from({length: len}, (_, i) =>
+  `hsl(146 60% ${35 + i * 40 / Math.max(1, len - 1)}%)`);
+
+/* ------------ сортируем банки для pie ------------ */
+const bankData = data.per_bank.labels.map((label, i) =>
+  ({ label, value: data.per_bank.values[i] })
+).sort((a,b) => b.value - a.value);
+
+const bankLabelsSorted  = bankData.map(d => d.label);
+const bankValuesSorted  = bankData.map(d => d.value);
+
+/* 1. Кол-во отзывов по категориям */
+new Chart(catChart,{type:'bar',
+  data:{labels:data.per_category.labels,
+        datasets:[{label:'Кол-во отзывов',
+                   data:data.per_category.values,
+                   backgroundColor:green,borderColor:green}]},
+  options:{responsive:true}});
+
+/* 2. Средний рейтинг по категориям */
+new Chart(ratingChart,{type:'bar',
+  data:{labels:data.avg_rating.labels,
+        datasets:[{label:'Средний рейтинг',
+                   data:data.avg_rating.values,
+                   backgroundColor:green,borderColor:green}]},
+  options:{responsive:true,scales:{y:{min:0,max:5}}}});
+
+/* 3. Кол-во отзывов по банкам (pie) */
+new Chart(bankChart,{type:'pie',
+  data:{labels:bankLabelsSorted,
+        datasets:[{label:'Кол-во отзывов',
+                   data:bankValuesSorted,
+                   backgroundColor:greenPalette(bankValuesSorted.length),
+                   borderColor:'#fff',borderWidth:1}]},
+  options:{responsive:true}});
+
+/* 4. Средний рейтинг по банкам */
+new Chart(bankAvgChart,{type:'bar',
+  data:{labels:data.avg_rating_bank.labels,
+        datasets:[{label:'Средний рейтинг',
+                   data:data.avg_rating_bank.values,
+                   backgroundColor:green,borderColor:green}]},
+  options:{responsive:true,scales:{y:{min:0,max:5}}}});
+
+/* 5. Распределение отзывов по рейтингу */
+new Chart(ratingDistChart,{type:'bar',
+  data:{labels:data.rating_distribution.labels,
+        datasets:[{label:'Кол-во отзывов',
+                   data:data.rating_distribution.values,
+                   backgroundColor:green,borderColor:green}]},
+  options:{responsive:true,
+           scales:{x:{title:{display:true,text:'Рейтинг'}}}}});
+
+/* 6. Активность отзывов по времени (кол-во) */
+new Chart(timeChart,{type:'line',
+  data:{labels:data.over_time.labels,
+        datasets:[{label:'Кол-во отзывов',
+                   data:data.over_time.values,
+                   borderColor:green,backgroundColor:green,
+                   tension:0.2,fill:false}]},
+  options:{responsive:true,
+           scales:{x:{type:'time',time:{unit:'month'},ticks:{autoSkip:false}},
+                   y:{beginAtZero:true}}}});
+
+/* 7. Средний рейтинг по времени */
+new Chart(avgRatingTimeChart,{type:'line',
+  data:{labels:data.avg_rating_time.labels,
+        datasets:[{label:'Средний рейтинг',
+                   data:data.avg_rating_time.values,
+                   borderColor:green,backgroundColor:green,
+                   tension:0.2,fill:false}]},
+  options:{responsive:true,
+           scales:{x:{type:'time',time:{unit:'month'},ticks:{autoSkip:false}},
+                   y:{min:0,max:5}}}});
+</script>
+{% endblock %}
